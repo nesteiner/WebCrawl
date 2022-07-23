@@ -1,0 +1,12 @@
+name = "WebCrawl"
+uuid = "ef44e8e1-9844-4350-b27e-8227cc803699"
+authors = ["steiner <steiner3044@163.com>"]
+version = "0.1.0"
+
+[deps]
+AbstractTrees = "1520ce14-60c1-5f80-bbc7-55ef81b5835c"
+Cascadia = "54eefc05-d75b-58de-a785-1a3403f0919f"
+Gumbo = "708ec375-b3d6-5a57-a7ce-8257bf98657a"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+URIs = "5c2747f8-b7ea-4ff2-ba2e-563bfd36b1d4"
