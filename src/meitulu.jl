@@ -1,3 +1,4 @@
+using HTTP, Gumbo, Cascadia
 CONFIG = Dict{String, String}()
 CONFIG["proxy"] = "http://127.0.0.1:7890"
 
@@ -11,27 +12,55 @@ function parse(startpage::String, dict::Dict{String, T}) where T <: Any
   end
 
   if response.status != 200
-    throw("fetching page error on $startpage")
+    error("fetching page error on $startpage")
   end
 
   parsed = parsehtml(String(response.body))
   selector = Selector("div.work-content>p>a>img")
   images = eachmatch(selector, parsed.root)
-  
-  @sync for image in images
-    directory = dict["startpath"]
-    if !isdir(directory)
-      mkdir(directory)
-    end
-    
-    path = joinpath(directory, string(dict["startfrom"]) * ".jpg")
-    dict["startfrom"] += 1
 
-    url = image.attributes["src"]
-    # @async pipeline(url, path)
-    @async pipeline(url, path)
+  tasks = Task[]
+  
+  # @sync for image in images
+  #   directory = dict["startpath"]
+  #   if !isdir(directory)
+  #     mkdir(directory)
+  #   end
+  
+  #   path = joinpath(directory, string(dict["startfrom"]) * ".jpg")
+  #   dict["startfrom"] += 1
+
+  #   url = image.attributes["src"]
+  #   # @async pipeline(url, path)
+  #   @async pipeline(url, path)
+  # end
+
+  for image in images
+    task = () -> begin
+      directory = dict["startpath"]
+      if !isdir(directory)
+        mkdir(directory)
+      end
+      
+      path = joinpath(directory, string(dict["startfrom"]) * ".jpg")
+      dict["startfrom"] += 1
+
+      url = image.attributes["src"]
+      # @async pipeline(url, path)
+      pipeline(url, path)
+    end
+
+    push!(tasks, Task(task))
+  end
+  
+  for task in tasks
+    schedule(task)
   end
 
+  for task in tasks
+    wait(task)
+  end
+  
   selector = Selector("div.work-content p a")
   page = last(eachmatch(selector, parsed.root))
   href = urljoin(startpage, page.attributes["href"])

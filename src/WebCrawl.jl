@@ -1,8 +1,10 @@
+module WebCrawl
+
 using HTTP, Gumbo, Cascadia
 
-module WebCrawl
+import Base: parse, pipeline
 include("urljoin.jl")
-include("meitulu.jl")
-
-export parse, pipeline
+# include("meitulu.jl")
+include("asyncspider.jl")
+export eachpage, parse, pipeline, Image
 end

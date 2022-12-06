@@ -1,0 +1,66 @@
+* WebCrawl
+** 生产者消费者问题
+#+begin_src julia
+  function producer(channel::Channel{Int})
+    for i in 1:20
+      @async begin
+        sleep(rand(1:5))
+        put!(channel, i)
+      end
+    end
+
+  end
+
+  function consumer(channel::Channel{Int})
+    for (index, value) in Iterators.enumerate(channel)
+        println("$(index): $(value)")
+    end
+
+    println("done")
+  end
+
+  function main()
+    @sync begin
+      channel = Channel{Int}(10)
+    
+      @async producer(channel)
+      @async producer(channel)
+      @async consumer(channel)
+    end
+  end
+#+end_src
+
+我们发现这个代码是永久阻塞的，因为 =channel= 没有关掉
+为了演示，我们将程序在 *REPL* 中执行
+** 异步爬虫
+基于上述的生产者消费者模型，我们这样定义函数
+#+begin_src julia
+  function parse(channel::Channel{Image}, url::String)
+  function pipeline(channel::Channel{Image})
+#+end_src
+其中 =parse= 分析 =url= 中的内容，再把分析到的内容传入给 =channel=
+=pipeline= 是一个无限的循环，从 =channel= 中取出内容进行处理
+另外有辅助函数
+#+begin_src julia
+  function eachpage(startpage::String)::Vector{String}
+#+end_src
+
+他从 =startpage= 解析网页，将所有要解析的网页通过数组返回
+我们这样运行程序
+#+begin_src julia
+  channel = Channel{Image}(10)
+  startpage = "https://meitulu.me/item/6433.html"
+
+  begin
+    pages = eachpage(startpage)
+    for page in pages
+      @async parse(channel, page)
+    end
+
+    @async pipeline(channel)
+
+  end
+
+#+end_src
+
+过一段时间等待爬取和下载任务完成后，手动关闭 =channel= 即可
